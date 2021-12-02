@@ -51,6 +51,7 @@ int main()
         {
             ++increase_count2;
         }
+        current_sum = next_sum;
     }
     std::cout << "Part2 : The number of increases is " << increase_count2 << "\n";
 
