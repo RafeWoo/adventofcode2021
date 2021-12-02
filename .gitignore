@@ -5,3 +5,5 @@
 /aoc2021/day1/x64/Debug
 /aoc2021/.vs/aoc2021/v17
 /aoc2021/x64/Debug
+/.vs
+/aoc2021/day1/day1.vcxproj.user
