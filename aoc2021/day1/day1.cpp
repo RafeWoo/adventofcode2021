@@ -32,12 +32,27 @@ int main()
 
     //read in input file
 
-    auto depths = read_input_vector("../input_files/day1.txt");
+    auto original_depths = read_input_vector("../input_files/day1.txt");
 
+    auto depths = original_depths;
     std::adjacent_difference(std::begin(depths), std::end(depths), std::begin(depths));
     auto increase_count = std::ranges::count_if(depths, [](auto i) {return i > 0; }) -1;
     std::cout << "The number of increases is " << increase_count << "\n";
 
+    
+    auto depths2 = original_depths;
+
+    int current_sum = depths2[0] + depths2[1] + depths2[2];
+    int increase_count2 = 0;
+    for (int i = 1; i < depths2.size() - 2; ++i)
+    {
+        int next_sum = current_sum + depths2[i + 2] - depths2[i - 1];
+        if (next_sum > current_sum)
+        {
+            ++increase_count2;
+        }
+    }
+    std::cout << "Part2 : The number of increases is " << increase_count2 << "\n";
 
 }
 
