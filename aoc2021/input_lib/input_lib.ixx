@@ -7,11 +7,6 @@ module;
 export module input_lib;
 
 
-export std::string get_hello()
-{
-	
-	return "hello_world";
-}
 
 export std::vector<int> read_input_vector(std::filesystem::path const& path)
 {

@@ -40,7 +40,7 @@ int main()
     }
     std::cout << "Part2 : The number of increases is " << increase_count2 << "\n";
 
-    std::cout << get_hello() << std::endl;
+
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
