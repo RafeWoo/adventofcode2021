@@ -7,3 +7,6 @@
 /aoc2021/x64/Debug
 /.vs
 /aoc2021/day1/day1.vcxproj.user
+/aoc2021/day2/x64/Debug
+/aoc2021/input_lib/x64/Debug
+/aoc2021/magic_enums/x64/Debug

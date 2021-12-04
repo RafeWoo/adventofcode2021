@@ -3,29 +3,14 @@
 
 #include <iostream>
 
-#include <filesystem>
-#include <fstream>
+
 #include <ranges>
 #include <algorithm>
 #include <numeric>
 
-std::vector<int> read_input_vector(std::filesystem::path const& path)
-{
-    std::vector<int> result{};
+import input_lib;
 
-    if (std::filesystem::exists(path))
-    {
-        auto stream = std::ifstream(path);
-        int line_value = 0;
-        while (stream >> line_value)
-        {
-            result.push_back(line_value);
-        }
- 
-    }
 
-    return result;
-}
 
 int main()
 {
@@ -55,6 +40,7 @@ int main()
     }
     std::cout << "Part2 : The number of increases is " << increase_count2 << "\n";
 
+    std::cout << get_hello() << std::endl;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
