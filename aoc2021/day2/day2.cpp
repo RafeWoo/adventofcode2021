@@ -34,6 +34,37 @@ int main()
 {
     auto readings = input::read_vector("../input_files/day2.txt", read_line);
 
+#if 1
+    //part2
+    int64_t aim = 0;
+    int64_t position = 0;
+    int64_t depth = 0;
+
+    std::ranges::for_each(readings, [&aim, &position, &depth](auto const& reading)
+        {
+            auto X = reading.second;
+
+            switch (reading.first)
+            {
+            case Direction::down:
+                aim += X;
+                break;
+
+            case Direction::up:
+                aim -= X;
+                break;
+
+            case Direction::forward:
+                position += X;
+                depth += aim * X;
+                break;
+            }
+        });
+    auto answer = position * depth;
+    std::cout << "Hello World! result = " << answer << "\n";
+#else
+    //part1
+
     uint64_t distance = 0;
     int64_t  depth = 0;
 
@@ -57,15 +88,6 @@ int main()
 
     auto answer = distance * depth;
     std::cout << "Hello World! result = " << answer << "\n";
+#endif
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
