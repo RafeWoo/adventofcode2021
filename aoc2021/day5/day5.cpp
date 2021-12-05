@@ -35,13 +35,13 @@ std::pair<Coord, Coord> read_line(std::string const& s)
         y1 = std::stoi(sm[4]);
     }
 
-    return { {x0,y0}, {x1,y1} };
+return { {x0,y0}, {x1,y1} };
 }
 
 static constexpr size_t GRID_WIDTH = 1000;
 static constexpr size_t GRID_HEIGHT = 1000;
 
-void print_answer1(std::vector<std::pair<Coord,Coord>> lines)
+void print_answer1(std::vector<std::pair<Coord, Coord>> lines)
 {
     auto p_grid = std::make_unique < std::array<uint8_t, GRID_WIDTH* GRID_HEIGHT> >();
     auto& grid = *p_grid;
@@ -81,13 +81,126 @@ void print_answer1(std::vector<std::pair<Coord,Coord>> lines)
     std::cout << std::format("The answer is {}\n", answer);
 }
 
+void print_grid(std::array<int, GRID_WIDTH* GRID_HEIGHT> const& grid)
+{
+    for (int row = 0; row < GRID_HEIGHT; ++row)
+    {
+        for (int col = 0; col < GRID_WIDTH; ++col)
+        {
+            std::cout << grid[row * GRID_WIDTH + col] << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << std::endl;
+}
+
+void print_answer2(std::vector<std::pair<Coord, Coord>> lines)
+{
+    auto p_grid = std::make_unique < std::array<int, GRID_WIDTH* GRID_HEIGHT> >();
+    auto& grid = *p_grid;
+
+    for (auto const& line : lines)
+    {
+        if (line.first.x == line.second.x)
+        {
+            //vertical line
+            auto top = std::min(line.first.y, line.second.y);
+            auto bot = std::max(line.first.y, line.second.y);
+            int x = line.first.x;
+            for (int y = top; y <= bot; ++y)
+            {
+                grid[y * GRID_WIDTH + x]++;
+            }
+        }
+        else if (line.first.y == line.second.y)
+        {
+            //horizontal line
+            int y = line.first.y;
+            auto left = std::min(line.first.x, line.second.x);
+            auto right = std::max(line.first.x, line.second.x);
+
+            for (int x = left; x <= right; ++x)
+            {
+                grid[y * GRID_WIDTH + x]++;
+            }
+        }
+        else
+        {
+            //assume diagonal
+            //int top = 0; //std::min(line.first.y, line.second.y);
+            //int bot = 0; // std::max(line.first.y, line.second.y);
+            //int left = 0;
+            //int right = 0;
+
+            if (line.first.x < line.second.x) //going right
+            {
+                auto left = line.first.x;
+                auto right = line.second.x;
+
+                if (line.first.y < line.second.y)  //going down
+                {
+                    auto top = line.first.y;
+                    auto bot = line.second.y;
+
+                    for (int x = left, y = top; y <= bot && x <= right; ++y, ++x)
+                    {
+                        grid[y * GRID_WIDTH + x]++;
+                    }
+                }
+                else   //going up
+                {
+                    auto top = line.second.y;
+                    auto bot = line.first.y;  
+
+                    for (int x = left, y = bot; y >= top && x <= right; --y, ++x)
+                    {
+                        grid[y * GRID_WIDTH + x]++;
+                    }
+                }
+            }
+            else  //going left
+            {
+                auto left = line.second.x;
+                auto right = line.first.x;
+
+                if (line.first.y < line.second.y)  //going down
+                {
+                    auto top = line.first.y;
+                    auto bot = line.second.y;
+ 
+                    for (int x = left, y = bot; y >= top && x <= right; --y, ++x)
+                    {
+                        grid[y * GRID_WIDTH + x]++;
+                    }
+                }
+                else   //going up
+                {
+                    auto top = line.second.y; 
+                    auto bot = line.first.y;
+                  
+                    for (int x = left, y = top; y <= bot && x <= right; ++y, ++x)
+                    {
+                        grid[y * GRID_WIDTH + x]++;
+                    }
+                }
+            }
+                     
+        }     
+    }
+    
+    auto answer = std::count_if(std::begin(grid), std::end(grid), [](const auto& val) {return val >= 2; });
+    std::cout << std::format("The answer is {}\n", answer);
+}
+
+
 int main()
 {
     //using namespace std::literals::string_literals;
     
     auto coords = input::read_vector("../input_files/day5.txt", read_line);
 
-    print_answer1(coords);
+    //print_answer1(coords);
+    print_answer2(coords);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
