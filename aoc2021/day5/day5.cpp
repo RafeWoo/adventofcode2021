@@ -2,10 +2,92 @@
 //
 
 #include <iostream>
+#include <regex>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <array>
+#include <format>
+
+import input_lib;
+
+struct Coord
+{
+    int x;
+    int y;
+};
+
+std::pair<Coord, Coord> read_line(std::string const& s)
+{
+    std::regex word_regex{ R"~(^([0-9]+),([0-9]+) -> ([0-9]+),([0-9]+))~" };
+
+    int x0 = 0;
+    int y0 = 0;
+    int x1 = 0;
+    int y1 = 0;
+    std::smatch sm;
+    if (std::regex_match(s, sm, word_regex))
+    {
+        x0 = std::stoi(sm[1]);
+        y0 = std::stoi(sm[2]);
+
+        x1 = std::stoi(sm[3]);
+        y1 = std::stoi(sm[4]);
+    }
+
+    return { {x0,y0}, {x1,y1} };
+}
+
+static constexpr size_t GRID_WIDTH = 1000;
+static constexpr size_t GRID_HEIGHT = 1000;
+
+void print_answer1(std::vector<std::pair<Coord,Coord>> lines)
+{
+    auto p_grid = std::make_unique < std::array<uint8_t, GRID_WIDTH* GRID_HEIGHT> >();
+    auto& grid = *p_grid;
+
+    for (auto const& line : lines)
+    {
+        if (line.first.x == line.second.x)
+        {
+            //vertical line
+            auto top = std::min(line.first.y, line.second.y);
+            auto bot = std::max(line.first.y, line.second.y);
+            int x = line.first.x;
+            for (int y = top; y <= bot; ++y)
+            {
+                grid[y * GRID_WIDTH + x]++;
+            }
+        }
+        else if (line.first.y == line.second.y)
+        {
+            //horizontal line
+            int y = line.first.y;
+            auto left = std::min(line.first.x, line.second.x);
+            auto right = std::max(line.first.x, line.second.x);
+
+            for (int x = left; x <= right; ++x)
+            {
+                grid[y * GRID_WIDTH + x]++;
+            }
+        }
+        else
+        {
+            //ignore
+        }
+    }
+
+    auto answer = std::count_if(std::begin(grid), std::end(grid), [](const auto& val) {return val >= 2; });
+    std::cout << std::format("The answer is {}\n", answer);
+}
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    //using namespace std::literals::string_literals;
+    
+    auto coords = input::read_vector("../input_files/day5.txt", read_line);
+
+    print_answer1(coords);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
