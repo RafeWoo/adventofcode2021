@@ -72,8 +72,8 @@ public:
 		auto repo_count = m_fish_counts[0];
 		m_fish_counts[0] = 0;
 		std::rotate(m_fish_counts.begin(), m_fish_counts.begin()+1, m_fish_counts.end());
-		m_fish_counts[6] += repo_count;
-		m_fish_counts[8] += repo_count;
+		m_fish_counts[RESET_FISH_VALUE] += repo_count;
+		m_fish_counts[NEW_FISH_VALUE] += repo_count;
 	}
 
 	auto total_fish_count() const
