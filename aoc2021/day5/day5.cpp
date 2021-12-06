@@ -127,11 +127,6 @@ void print_answer2(std::vector<std::pair<Coord, Coord>> lines)
         else
         {
             //assume diagonal
-            //int top = 0; //std::min(line.first.y, line.second.y);
-            //int bot = 0; // std::max(line.first.y, line.second.y);
-            //int left = 0;
-            //int right = 0;
-
             if (line.first.x < line.second.x) //going right
             {
                 auto left = line.first.x;
