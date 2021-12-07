@@ -42,6 +42,28 @@ auto calc_cost_part1(int position, std::array<int, 2000>const& crab_counts)
 	return cost;
 }
 
+
+uint64_t calc_tri(int value)
+{
+	return (value * (value + 1)) / 2;
+}
+
+auto calc_cost_part2(int position, std::array<int, 2000>const& crab_counts)
+{
+
+	uint64_t cost = 0;
+
+	for (int pos_index = 0; pos_index < crab_counts.size(); ++pos_index)
+	{
+		cost += calc_tri( abs(pos_index - position)) * crab_counts[pos_index];
+	}
+
+
+	return cost;
+}
+
+
+
 int main(void)
 {
 	auto crabs = read_crabs();
@@ -60,7 +82,13 @@ int main(void)
 	std::array<uint64_t, 2000> position_costs{};
 	for (int i = 0; i < 2000; ++i)
 	{
+#if 1
+		//part2
+		position_costs[i] = calc_cost_part2(i, position_counts);
+#else
+		//part1
 		position_costs[i] = calc_cost_part1(i, position_counts);
+#endif
 	}
 
 
