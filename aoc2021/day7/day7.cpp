@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
+#include <ranges>
 
 import input_lib;
 
@@ -30,14 +31,17 @@ std::vector<int> read_crabs()
 
 auto calc_cost_part1(int position, std::array<int, 2000>const& crab_counts)
 {
+	int index = 0;
 
-	uint64_t cost = 0;
+	auto calc_cost = [position, &index](const auto& count)
+	{
+		return abs((index++ - position)) * count;
+	};
+
+	auto crab_costs = crab_counts | std::views::transform(calc_cost);
+
+	uint64_t cost = std::accumulate(crab_costs.begin(), crab_costs.end(), 0);
 	
-		for (int pos_index = 0; pos_index < crab_counts.size(); ++pos_index)
-		{
-			cost += abs(pos_index - position) * crab_counts[pos_index];
-		}
-		
 
 	return cost;
 }
@@ -82,7 +86,7 @@ int main(void)
 	std::array<uint64_t, 2000> position_costs{};
 	for (int i = 0; i < 2000; ++i)
 	{
-#if 1
+#if 0
 		//part2
 		position_costs[i] = calc_cost_part2(i, position_counts);
 #else
