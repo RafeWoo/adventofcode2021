@@ -57,6 +57,27 @@ public:
 
 	}
 
+	int64_t output_count() const
+	{
+		return std::ranges::count_if( m_outputs, [](const auto& s)
+			{
+				switch (s.size())
+				{
+				case 2:
+				case 3:
+				case 4:
+				case 7:
+					return true;
+
+				default:
+					return false;
+
+				}
+			}
+		);
+	}
+
+private:
 	std::vector < std::string > m_inputs;
 	std::vector < std::string > m_outputs;
 };
@@ -75,22 +96,7 @@ int main(void)
 	int64_t output_digit_count = 0;
 	for (const auto& light : lights)
 	{
-		output_digit_count += std::ranges::count_if(light.m_outputs, [](const auto& s)
-			{ 
-				switch (s.size())
-				{
-				case 2:
-				case 3:
-				case 4:
-				case 7:
-					return true;
-
-				default:
-					return false;
-
-				}
-			}
-		);
+		output_digit_count += light.output_count();  
 	}
 
 	std::cout << std::format("The output is {}", output_digit_count) << std::endl;
