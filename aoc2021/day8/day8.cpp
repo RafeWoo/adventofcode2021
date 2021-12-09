@@ -97,16 +97,13 @@ public:
 		three = *it3;
 		inputs.erase(it3);
 		
-		//find set of horizontals
+		//find set of horizontal bars
 		std::vector<char> hor;
-		std::set_difference(three.begin(),three.end(), 
-							one.begin(), one.end(), std::inserter(hor, hor.begin()));
+		std::ranges::set_difference(three, one, std::inserter(hor, hor.begin()));
 
 		//find middle bar
 		std::vector<char> bar;
-		std::set_intersection(four.begin(), four.end(),
-			hor.begin(), hor.end(),
-			std::inserter(bar, bar.begin()));
+		std::ranges::set_intersection(four,hor, std::inserter(bar, bar.begin()));
 
 
 	
@@ -139,8 +136,8 @@ public:
 
 		//diff of eight and six gives top right
 		std::vector<char> top_right;
-		std::set_difference(eight.begin(), eight.end(),
-			six.begin(), six.end(),
+		std::ranges::set_difference(eight,
+			six,
 			std::inserter(top_right, top_right.begin()));
 		
 		//tow contains top right
