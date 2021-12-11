@@ -215,22 +215,28 @@ int main(void)
 		int64_t flash_count = 0;
 
 		//print_grid(grid);
-		for (int i = 0; i < 100; ++i)
+		int step = 0;
+		while( true) 
 		{
 			//each iter
 			std::ranges::for_each(grid, [](auto& oct) { oct.increase_energy(); });
 			//print_grid(grid);
-			flash_count += flash_grid(grid);
+			auto count = flash_grid(grid);
+
+			flash_count += count;
 			//print_grid(grid);
 			std::ranges::for_each(grid, [](auto& oct) { oct.reset(); });
 			//print_grid(grid);
 
-			int ten = 9;
-			++ten;
 
+			++step;
+			if (count == 100)
+			{
+				break;
+			}
 		}
 
-		std::cout << std::format("The flash count is {}", flash_count);
+		std::cout << std::format("The flash step is {}", step);
 
 		return 0;
 }
