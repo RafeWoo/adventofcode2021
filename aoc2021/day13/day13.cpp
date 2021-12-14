@@ -100,8 +100,22 @@ int main(void)
 		//break;
 	}
 
-	auto dot_count = dots.size();
+	//auto dot_count = dots.size();
 
-	std::cout << std::format("The number of dots left is {}\n", dot_count);
+	//std::cout << std::format("The number of dots left is {}\n", dot_count);
+	std::array< std::string, 6 > grid;
+	std::ranges::fill(grid, std::string(40,' '));
+
+	for (auto const& dot : dots)
+	{
+		grid[dot.second][dot.first] = '*';
+	}
+
+
+	for (auto const& s : grid)
+	{
+		std::cout << s << "\n";
+	}
+
 	return 0;
 }
