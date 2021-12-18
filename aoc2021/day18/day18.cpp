@@ -81,8 +81,10 @@ public:
 		bool action_taken = false;
 		do
 		{
+			//action_taken = false;
+
 			action_taken = exploded_something();
-							//or  split_something();
+				action_taken = action_taken or  split_something();
 			
 
 		} while (action_taken);
@@ -96,13 +98,13 @@ public:
 		return result;
 	}
 
-	void print() const
+	void print(bool add_newline=true) const
 	{
 		std::cout << "[";
 
 		auto v = overloaded{
 			[](const uint8_t& n) { std::cout << (int) n; }
-			,[](const SnailPtr& s) { s->print(); }
+			,[](const SnailPtr& s) { s->print(false); }
 		};
 		std::visit(v, m_left);
 		std::cout << ",";
@@ -110,6 +112,11 @@ public:
 
 		
 		std::cout << "]";
+		if (add_newline)
+		{
+			std::cout << "\n";
+		}
+		
 	}
 
 private:
@@ -232,6 +239,75 @@ private:
 	};
 
 
+	class Splitter : public Visitor
+	{
+	public:
+		bool visit(uint8_t& n, int depth) override
+		{
+			bool carry_on = true;
+		
+			switch (m_state)
+			{
+			case State::FindingNumToSplit:
+				if (n >= 10)
+				{
+					m_state = State::ReplaceWithNewPair;
+					uint8_t left = n / 2;
+					uint8_t right = (n + 1) / 2;
+					m_new_pair = std::make_unique<SnailPair>(left,right, depth+1);  
+				}
+				break;
+
+			case State::ReplaceWithNewPair:
+				break;
+			}
+
+			return carry_on;
+		}
+
+		bool visit(SnailPair* s, int depth) override
+		{
+			bool carry_on = true;
+
+			switch (m_state)
+			{
+			case State::FindingNumToSplit:			
+				break;
+
+			case State::ReplaceWithNewPair:
+				assert(m_new_pair != nullptr);
+				if (s->m_left.index() == 0 && std::get<0>(s->m_left) >= 10)
+				{
+					s->m_left = std::move(m_new_pair);
+				}
+				else
+				{
+					assert(s->m_right.index() == 0 && std::get<0>(s->m_right) >= 10);
+					s->m_right = std::move(m_new_pair);
+				}
+				carry_on = false;
+				break;
+			}
+
+			return carry_on;
+		}
+
+		bool split() const
+		{
+			return m_state != State::FindingNumToSplit;
+		}
+
+	private:
+		enum class State
+		{
+			FindingNumToSplit,
+			ReplaceWithNewPair
+		};
+		State m_state = State::FindingNumToSplit;
+		SnailPtr m_new_pair = nullptr;
+	};
+
+
 	class Walker
 	{
 	public:
@@ -288,7 +364,9 @@ private:
 
 	bool split_something()
 	{
-		return false;
+		Splitter splitter{};
+		walk_tree(this, splitter, 1);
+		return splitter.split();		
 	}
 
 	class DepthUpdater
@@ -336,12 +414,16 @@ SnailPtr string_to_snail_pair(std::string const& s)
 {
 	std::stack<Element> elements{};
 	int depth = 0;
+	
+	uint8_t cur_val = 0;
+	bool reading_val = false;
+
 	for (char c : s)
 	{
 		switch (c)
 		{
 		case '[': //depth increase by 1
-			++depth;
+			++depth;			
 			break;
 
 		case ']':
@@ -349,6 +431,12 @@ SnailPtr string_to_snail_pair(std::string const& s)
 			//create a pair and push onto the stack
 			//depth decreases by 1
 		{
+			if (reading_val)
+			{
+				elements.push(cur_val);
+				reading_val = false;
+			}
+
 			assert(elements.size() >= 2);
 			auto right = std::move(elements.top());
 			elements.pop();
@@ -361,7 +449,15 @@ SnailPtr string_to_snail_pair(std::string const& s)
 			break;
 
 		default:
-		case ',': //do nothing
+			//do nothing
+			break;
+
+		case ',':
+			if (reading_val)
+			{
+				elements.push(cur_val);
+				reading_val = false;
+			}
 			break;
 
 		 //must be a number
@@ -376,8 +472,14 @@ SnailPtr string_to_snail_pair(std::string const& s)
 		case '8':
 		case '9':
 			{
+				if (!reading_val)
+				{
+					cur_val = 0;
+					reading_val = true;
+				}
 			uint8_t val = c - '0';
-			elements.push(val);
+			//elements.push(val);
+			cur_val = 10 * cur_val + val;
 			}
 			break;
 		}
@@ -407,9 +509,10 @@ int main(void)
 	test4->reduce();
 	test4->print();
 
-	Element bill{ zero };
-	auto& thing = std::get<0>(bill);
-	thing = 88;
+	auto test5 = string_to_snail_pair("[10, 1]");
+	test5->print();
+	test5->reduce();
+	test5->print();
 
 	//auto snails = input::read_vector("../input_files/day18.txt", string_to_snail_pair);
 	//accumulate
