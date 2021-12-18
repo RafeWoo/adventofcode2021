@@ -104,11 +104,11 @@ size_t read_packet_count(std::string_view count_bits)
 	return std::bitset<11>{ std::string{ count_bits } }.to_ulong();
 }
 
-//template <typename TVisitor>
 
 
-size_t read_packets(std::string_view root, bool is_packet_length, size_t size, std::function<void(size_t)> const& visit)
+std::pair<std::vector<uint64_t>, size_t> read_packets(std::string_view root, bool is_packet_length, size_t size)
 {
+	std::vector<uint64_t> packet_values{};
 
 	size_t packet_pos = 0;
 	size_t read_pos = 0;
@@ -134,6 +134,8 @@ size_t read_packets(std::string_view root, bool is_packet_length, size_t size, s
 			auto [literal, literal_size] = read_literal(root.substr(read_pos));
 			read_pos += literal_size;
 			packet_size += literal_size;
+
+			packet_values.push_back(literal);
 		}
 		break;
 
@@ -157,15 +159,62 @@ size_t read_packets(std::string_view root, bool is_packet_length, size_t size, s
 				packet_size += 11;
 			}
 
-			auto bits_read = read_packets(root.substr(read_pos), op_is_packet_length, count, visit);
+			auto const& [sub_values, bits_read] = read_packets(root.substr(read_pos), op_is_packet_length, count );
 			read_pos += bits_read;
 			packet_size += bits_read;
+
+			uint64_t sub_value = 0;
+			switch (type_id)
+			{
+			case 0: //sum packets
+				assert(sub_values.size() >=1);
+				sub_value = std::accumulate(sub_values.begin(), sub_values.end(), 0ULL);
+				break;
+
+			case 1: //product packets
+				assert(sub_values.size() >= 1);
+				sub_value = std::accumulate(sub_values.begin(), sub_values.end(), 1ULL, [](auto a, auto b) {return a * b; });
+				break;
+
+			case 2: //min 
+			{
+				auto it = std::ranges::min_element(sub_values);
+				assert(it != sub_values.end());
+				sub_value = *it;
+			}
+				break;
+
+			case 3: //max
+			{
+				auto it = std::ranges::max_element(sub_values);
+				assert(it != sub_values.end());
+				sub_value = *it;
+			}
+				break;
+
+			case 5: //gt
+				assert( sub_values.size() == 2 );
+				sub_value = sub_values[0] > sub_values[1] ? 1 : 0;
+				break;
+
+			case 6: //lt
+				assert(sub_values.size() == 2);
+				sub_value = sub_values[0] < sub_values[1] ? 1 : 0;
+				break;
+
+			case 7: //eq
+				assert(sub_values.size() == 2);
+				sub_value = sub_values[0] == sub_values[1] ? 1 : 0;
+				break;
+
+			}
+
+			packet_values.push_back(sub_value);
 		}
 		break;
 		}
 		
-		//visit current packet
-		visit(version);
+	
 
 		if (is_packet_length)
 		{
@@ -178,7 +227,7 @@ size_t read_packets(std::string_view root, bool is_packet_length, size_t size, s
 			
 	}
 
-	return read_pos;
+	return std::make_pair( std::move(packet_values), read_pos);
 	//typeid == 4 -> read literal
 	//typeid != 4 -> read operator
 
@@ -242,13 +291,10 @@ int main(void)
 
 	//binary_string = "00111000000000000110111101000101001010010001001000000000";
 
-	uint64_t version_total = 0;
-	auto accumulate_version = [&version_total](size_t version)
-	{
-		version_total += version;
-	};
-	read_packets(binary_string, false, 1, accumulate_version);
+	
 
-	std::cout << std::format("The total version number is {}", version_total);
+	auto const& [values, bits_read] = read_packets(binary_string, false, 1);
+
+	std::cout << std::format("The packet evaluates to  {}", values[0]);
 	return 0;
 }
