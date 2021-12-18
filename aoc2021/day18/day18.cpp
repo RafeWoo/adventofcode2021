@@ -99,7 +99,57 @@ public:
 		} while (action_taken);
 	}
 
+	uint64_t magnitude() const
+	{
+		auto calc_mag = CalcMagnitude{};
+		uint64_t result = 3 * std::visit(calc_mag, m_left) + 2 * std::visit(calc_mag, m_right);
+		
+		return result;
+	}
+
 private:
+
+	class CalcMagnitude
+	{
+	public:
+		uint64_t operator()(uint8_t const& n)
+		{
+			return n;
+		}
+
+		uint64_t operator()(SnailPtr const& s)
+		{
+			return s->magnitude();
+		}
+	};
+
+	class Walker
+	{
+	public:
+		void operator()(uint8_t n) 
+		{
+
+		}
+
+		void operator()(SnailPtr& s)
+		{
+			SnailPair::walk_tree(s.get());			
+		}
+	};
+	
+	static bool walk_tree(SnailPair* pair)
+	{
+		auto walker = Walker{};
+		//if (v.visit(pair))
+		//{
+		//	walk_tree()
+		//}
+		//std::visit(Walker{}, pair);
+		std::visit(walker, pair->m_left);
+		std::visit(walker, pair->m_right);
+
+	}
+
 
 	bool find_exploding_child()
 	{
@@ -149,8 +199,19 @@ private:
 
 	Element m_left;
 	Element m_right;
-	int m_depth = 0;
+	int m_depth = 1;
 };
+
+SnailPtr add_snails(SnailPtr left, SnailPtr right)
+{
+	if (!left) return right;
+	if (!right) return left;
+
+	auto result = std::make_unique<SnailPair>(std::move(left), std::move(right));
+	result->reduce();
+	return result;
+}
+
 
 SnailPtr string_to_snail_pair(std::string const& s)
 {
@@ -180,10 +241,21 @@ SnailPtr string_to_snail_pair(std::string const& s)
 		}
 			break;
 
+		default:
 		case ',': //do nothing
 			break;
 
-		default: //must be a number
+		 //must be a number
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
 			{
 			uint8_t val = c - '0';
 			elements.push(val);
@@ -192,7 +264,7 @@ SnailPtr string_to_snail_pair(std::string const& s)
 		}
 	}
 
-	//at stack should contain 1 Element which should be a SnailPtr
+	//at end, stack should contain 1 Element which should be a SnailPtr
 	assert(elements.size() == 1);
 	assert( elements.top().index() ==1  );
 	return std::get<1>(std::move(elements.top()));
@@ -202,7 +274,16 @@ int main(void)
 {
 	auto test = string_to_snail_pair("[[[[[9,8],1],2],3],4]");
 
-	auto snails = input::read_vector("../input_files/day18.txt", string_to_snail_pair);
+	auto test1 = string_to_snail_pair("[1, 2]");
+	auto test2 = string_to_snail_pair("[[3,4],5]");
 
+	auto r = add_snails(std::move(test1), std::move(test2));
+	auto mag = r->magnitude();
+
+	auto test3 = string_to_snail_pair("[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]");
+	auto mag3 = test3->magnitude();
+	//auto snails = input::read_vector("../input_files/day18.txt", string_to_snail_pair);
+	//accumulate
+	//get magnitude
 	return 0;
 } 
