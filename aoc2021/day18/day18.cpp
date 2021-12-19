@@ -572,6 +572,51 @@ SnailPtr string_to_snail_pair(std::string const& s)
 	return std::get<1>(std::move(elements.top()));
 }
 
+#if 1 //part 2
+
+
+uint64_t sum_of(const std::string& a, const std::string& b)
+{
+	auto snail_a = string_to_snail_pair(a);
+	auto snail_b = string_to_snail_pair(b);
+
+	auto sum = add_snails(std::move(snail_a), std::move(snail_b));
+	return sum->magnitude();
+}
+
+//find max sum of any 2 different numbers in list
+int main(void)
+{
+	auto snail_strings = input::read_vector("../input_files/day18.txt", [](const auto& s) {return s; });
+
+	auto num_snails = snail_strings.size();
+
+	uint64_t max_sum = 0;
+	for (int a_index = 0; a_index < num_snails - 1; ++a_index)
+	{
+		for (int b_index = a_index + 1; b_index < num_snails; ++b_index)
+		{
+			//test a + b 
+			auto test1 = sum_of(snail_strings[a_index], snail_strings[b_index]);
+			if (test1 > max_sum)
+			{
+				max_sum = test1;
+			}
+			//test b + a
+			auto test2 = sum_of(snail_strings[b_index], snail_strings[a_index]);
+			if (test2 > max_sum)
+			{
+				max_sum = test2;
+			}
+		}
+	}
+
+	std::cout << std::format("The max sum found is {}", max_sum);
+	
+	return 0;
+}
+
+#else // part 1
 int main(void)
 {
 #if 0
@@ -607,7 +652,7 @@ int main(void)
 	snails.emplace_back(string_to_snail_pair("[5, 5]"));
 	snails.emplace_back(string_to_snail_pair("[6, 6]"));
 #endif
-	auto snails = input::read_vector("../input_files/day18_example.txt", string_to_snail_pair);
+	auto snails = input::read_vector("../input_files/day18.txt", string_to_snail_pair);
 	
 	//accumulate
 	SnailPtr bob = nullptr;
@@ -616,7 +661,12 @@ int main(void)
 		bob = add_snails(std::move(bob), std::move(s));
 		//bob->print();
 	}
-	bob->print();
+	//bob->print();
 	//get magnitude
+	auto mag = bob->magnitude();
+
+	std::cout << std::format("The final magnitude is {}\n", mag);
+
 	return 0;
-}  
+}   
+#endif
