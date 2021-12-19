@@ -33,34 +33,37 @@ template<class... Ts> overloaded(Ts...)->overloaded<Ts...>;
 class SnailPair;
 using SnailPtr = std::unique_ptr<SnailPair>;
 
-using Element = std::variant<uint8_t, SnailPtr>;
+using Number = int8_t;
+using Element = std::variant<Number, SnailPtr>;
 
-constexpr uint8_t zero = 0;
+constexpr Number zero = 0;
+constexpr Number ExplodingPlaceHolder= -1;
 
 class SnailPair
 {
 public:
-	SnailPair(uint8_t left, uint8_t right)
+#if 0
+	SnailPair(Number left, Number right)
 		: m_left{ left }
 		, m_right{ right }
 	{
 		
 	}
 
-	SnailPair(uint8_t left, SnailPtr right)
+	SnailPair(Number left, SnailPtr right)
 		: m_left{ left }
 		, m_right{ std::move(right) }
 	{	
 		update_child_depths();
 	}
 
-	SnailPair(SnailPtr left, uint8_t right)
+	SnailPair(SnailPtr left, Number right)
 		: m_left{ std::move(left) }
 		, m_right{ right }
 	{		
 		update_child_depths();
 	}
-
+#endif
 	SnailPair(SnailPtr left, SnailPtr right)
 		: m_left{ std::move(left) }
 		, m_right{ std::move(right) }
@@ -81,12 +84,28 @@ public:
 		bool action_taken = false;
 		do
 		{
-			//action_taken = false;
 
-			action_taken = exploded_something();
-				action_taken = action_taken or  split_something();
-			
+#if 0
+			action_taken = false;
 
+			if (exploded_something())
+			{
+				std::cout << "exploded\n";
+				action_taken = true;
+				print();
+
+			}
+			else if (split_something())
+			{
+				std::cout << "split\n";
+				action_taken = true;
+				print();
+			}
+
+#else
+			action_taken = exploded_something() or split_something();
+#endif
+		
 		} while (action_taken);
 	}
 
@@ -103,7 +122,7 @@ public:
 		std::cout << "[";
 
 		auto v = overloaded{
-			[](const uint8_t& n) { std::cout << (int) n; }
+			[](const Number& n) { std::cout << (int) n; }
 			,[](const SnailPtr& s) { s->print(false); }
 		};
 		std::visit(v, m_left);
@@ -124,7 +143,7 @@ private:
 	class CalcMagnitude
 	{
 	public:
-		uint64_t operator()(uint8_t const& n)
+		uint64_t operator()(Number const& n)
 		{
 			return n;
 		}
@@ -140,80 +159,87 @@ private:
 	{
 	public:
 		virtual ~Visitor() {};
-		virtual bool visit(uint8_t&, int) = 0;
-		virtual bool visit(SnailPair* pair_ptr,int) = 0;   //return true if keep iterating //false to stop
+		virtual bool visit(Number&, int, SnailPair*) = 0;
+		virtual bool visit(SnailPair* pair_ptr,int, SnailPair* ) = 0;   //return true if keep iterating //false to stop
 	};
 
 	class Exploder: public Visitor
 	{
 	public:
 
-
-		bool visit(uint8_t& n, int depth) override
+		bool visit(Number& n, int depth, SnailPair* parent) override
 		{
+			bool keep_going = true;
+
 			switch (m_state)
 			{
 			case State::FindExplodingPair:
+				//record the right-most number to the left of exploding pair
 				if (depth < 5)
 				{
 					m_left_num = &n;
 				}
-				return true;
+				break;
 
-			default:
-			case State::Explode:
-				//should not reach this state
-				//assert(false);
-				return true;
+			case State::FindPlaceHolder:
+				if (n == ExplodingPlaceHolder)
+				{
+					n = zero;
+					m_state = State::FindNextNumber;
+				}
+				break;
 
 			case State::FindNextNumber:
 				//we've found a number to update
 				n += m_right_num;
-				return false; //can stop now
+				m_state = State::Finished;
+				keep_going = false;
+				break;
 
+			case State::Finished:
+				keep_going = false;
+				break;
+			
 			}
+
+			return keep_going;
 			
 		}
 
-		bool visit(SnailPair* s, int depth) override
+		bool visit(SnailPair* s, int depth, SnailPair* parent) override
 		{
 			assert(s->m_depth == depth);
+
+			bool keep_going = true;
 
 			switch (m_state)
 			{
 			case State::FindExplodingPair:
-				if (s->m_depth >= 5)
+				if (s->m_depth == 4)
 				{
-					m_state = State::Explode;					
-					if (m_left_num != nullptr)
+					if (explode_either_child(s))
 					{
-						*m_left_num += std::get<0>(s->m_left);
-						m_left_num = nullptr;
-					}
-					m_right_num = std::get<0>(s->m_right);
+						m_state = State::FindPlaceHolder;
+						keep_going = false;
+					}			     
+					
 				}
-				return true;
+				break;
 
-			case State::Explode:
-				assert(s->m_depth == 4);				
-				if (s->m_left.index() == 1)
-				{
-					s->m_left = zero;
-				}
-				else
-				{
-					s->m_right = zero;
-				}
-				m_state = State::FindNextNumber;
-				return true;
+		
+			case State::FindPlaceHolder:
+				break;
 
-			default:
 			case State::FindNextNumber:
-				//keep going
-				return true;
+				break;
+
+			case State::Finished:
+				keep_going = false;
+				break;
 
 			}
 
+			return keep_going;
 		}
 
 		bool exploded() const
@@ -224,17 +250,52 @@ private:
 
 	private:
 
+		bool explode_either_child(SnailPair* s)
+		{
+			bool exploded_something = false;
+
+			SnailPtr child = nullptr;
+			if (s->m_left.index() == 1) 
+			{
+				child = std::move(std::get<1>(s->m_left));
+				s->m_left = ExplodingPlaceHolder;
+			}
+			else if (s->m_right.index() == 1)
+			{
+				child = std::move(std::get<1>(s->m_right));
+				s->m_right = ExplodingPlaceHolder;
+			}
+
+
+			if (child != nullptr)
+			{
+				//add the left digit to the nearest number to the left if there is one
+				if (m_left_num != nullptr)
+				{
+					*m_left_num += std::get<0>(child->m_left);
+					m_left_num = nullptr;
+				}
+				//store the right digit to add to the nearest number to the right if there is one
+				m_right_num = std::get<0>(child->m_right);
+
+				exploded_something = true;
+			}
+
+			return exploded_something;
+
+		}
 
 		enum class State
 		{
 			FindExplodingPair,    //in this state we update left num to point to the last num we see
-			Explode,              //remove the last pair we visited
-			FindNextNumber		  //in this state we are looking for a number to the right that we can add to	
+			FindPlaceHolder,
+			FindNextNumber,		  //in this state we are looking for a number to the right that we can add to
+			Finished
 		};
 
 		State m_state = State::FindExplodingPair;
-		uint8_t* m_left_num = nullptr;
-		uint8_t  m_right_num = 0;
+		Number* m_left_num = nullptr;
+		Number  m_right_num = 0;
 	
 	};
 
@@ -242,7 +303,7 @@ private:
 	class Splitter : public Visitor
 	{
 	public:
-		bool visit(uint8_t& n, int depth) override
+		bool visit(Number& n, int depth, SnailPair* parent) override
 		{
 			bool carry_on = true;
 		
@@ -251,21 +312,28 @@ private:
 			case State::FindingNumToSplit:
 				if (n >= 10)
 				{
-					m_state = State::ReplaceWithNewPair;
-					uint8_t left = n / 2;
-					uint8_t right = (n + 1) / 2;
-					m_new_pair = std::make_unique<SnailPair>(left,right, depth+1);  
+					
+					Number left = n / 2;
+					Number right = (n + 1) / 2;
+					auto new_pair = std::make_unique<SnailPair>(left,right, depth+1);  
+
+					assert(parent != nullptr);
+					parent->swap_in_new_pair(std::move(new_pair), n);
+
+					carry_on = false;
+					m_state = State::Finished;
 				}
 				break;
 
-			case State::ReplaceWithNewPair:
+			case State::Finished:
+				carry_on = false;
 				break;
 			}
 
 			return carry_on;
 		}
 
-		bool visit(SnailPair* s, int depth) override
+		bool visit(SnailPair* s, int depth, SnailPair* parent) override
 		{
 			bool carry_on = true;
 
@@ -274,25 +342,15 @@ private:
 			case State::FindingNumToSplit:			
 				break;
 
-			case State::ReplaceWithNewPair:
-				assert(m_new_pair != nullptr);
-				if (s->m_left.index() == 0 && std::get<0>(s->m_left) >= 10)
-				{
-					s->m_left = std::move(m_new_pair);
-				}
-				else
-				{
-					assert(s->m_right.index() == 0 && std::get<0>(s->m_right) >= 10);
-					s->m_right = std::move(m_new_pair);
-				}
-				carry_on = false;
+			case State::Finished:
+				carry_on = false;			
 				break;
 			}
 
 			return carry_on;
 		}
 
-		bool split() const
+		bool did_split() const
 		{
 			return m_state != State::FindingNumToSplit;
 		}
@@ -301,38 +359,40 @@ private:
 		enum class State
 		{
 			FindingNumToSplit,
-			ReplaceWithNewPair
+			Finished
 		};
 		State m_state = State::FindingNumToSplit;
-		SnailPtr m_new_pair = nullptr;
+		
 	};
 
 
 	class Walker
 	{
 	public:
-		Walker(Visitor& v, int depth)
+		Walker(Visitor& v, int depth, SnailPair* parent)
 			: m_v{v}
 			, m_depth{depth}
+			, m_parent{ parent }
 		{}
 
-		bool operator()(uint8_t& n) 
+		bool operator()(Number& n)
 		{
-			return m_v.visit(n, m_depth);			
+			return m_v.visit(n, m_depth, m_parent);			
 		}
 
 		bool operator()(SnailPtr& s)
 		{
-			return SnailPair::walk_tree(s.get(), m_v, m_depth + 1);			
+			return SnailPair::walk_tree(s.get(), m_v, m_depth + 1, m_parent);			
 		}
 	private:
 		Visitor& m_v;
 		int m_depth;
+		SnailPair* m_parent;
 	};
 	
-	static bool walk_tree(SnailPair* pair, Visitor& v, int depth)
+	static bool walk_tree(SnailPair* pair, Visitor& v, int depth, SnailPair* parent)
 	{
-		auto walker = Walker{v, depth};
+		auto walker = Walker{v, depth, pair};
 	
 		
 		if (!std::visit(walker, pair->m_left))
@@ -340,7 +400,7 @@ private:
 			return false;
 		}	
 		
-		if (!v.visit(pair, depth))
+		if (!v.visit(pair, depth, parent))
 		{
 			return false;
 		}
@@ -357,16 +417,37 @@ private:
 	bool exploded_something()
 	{
 		Exploder exploder{};
-		walk_tree(this, exploder, 1);
-		return exploder.exploded();
+		walk_tree(this, exploder, 1, nullptr);
+		if (exploder.exploded())
+		{
+			//walk tree again and find first number after the placeholder and 
+			walk_tree(this, exploder, 1, nullptr);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 
 	bool split_something()
 	{
 		Splitter splitter{};
-		walk_tree(this, splitter, 1);
-		return splitter.split();		
+		walk_tree(this, splitter, 1, nullptr);
+		return splitter.did_split();		
+	}
+
+	void swap_in_new_pair(SnailPtr split, int val)
+	{
+		if (m_left.index() == 0 and std::get<0>(m_left) == val)
+		{
+			m_left = std::move(split);
+		}
+		else if (m_right.index() == 0 and std::get<0>(m_right) == val)
+		{
+			m_right = std::move(split);
+		}
 	}
 
 	class DepthUpdater
@@ -415,7 +496,7 @@ SnailPtr string_to_snail_pair(std::string const& s)
 	std::stack<Element> elements{};
 	int depth = 0;
 	
-	uint8_t cur_val = 0;
+	Number cur_val = 0;
 	bool reading_val = false;
 
 	for (char c : s)
@@ -493,6 +574,7 @@ SnailPtr string_to_snail_pair(std::string const& s)
 
 int main(void)
 {
+#if 0
 	auto test = string_to_snail_pair("[[[[[9,8],1],2],3],4]");
 
 	auto test1 = string_to_snail_pair("[1, 2]");
@@ -514,8 +596,27 @@ int main(void)
 	test5->reduce();
 	test5->print();
 
-	//auto snails = input::read_vector("../input_files/day18.txt", string_to_snail_pair);
+#endif
+#if 0
+	std::vector<SnailPtr> snails{};
+
+	snails.emplace_back(string_to_snail_pair("[1, 1]"));
+	snails.emplace_back(string_to_snail_pair("[2, 2]"));
+	snails.emplace_back(string_to_snail_pair("[3, 3]"));
+	snails.emplace_back(string_to_snail_pair("[4, 4]"));
+	snails.emplace_back(string_to_snail_pair("[5, 5]"));
+	snails.emplace_back(string_to_snail_pair("[6, 6]"));
+#endif
+	auto snails = input::read_vector("../input_files/day18_example.txt", string_to_snail_pair);
+	
 	//accumulate
+	SnailPtr bob = nullptr;
+	for (auto& s : snails)
+	{ 
+		bob = add_snails(std::move(bob), std::move(s));
+		//bob->print();
+	}
+	bob->print();
 	//get magnitude
 	return 0;
-} 
+}  
