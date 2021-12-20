@@ -142,6 +142,11 @@
   <ItemGroup>
     <ClCompile Include="day15.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\input_lib\input_lib.vcxproj">
+      <Project>{bf5dfce8-e0d9-4d70-b453-709a97d0b480}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
