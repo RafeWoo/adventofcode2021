@@ -79,13 +79,16 @@ public:
 		{
 			m_connections[e.first.id()].push_back(e.second);
 			m_connections[e.second.id()].push_back(e.first);
+
+			m_sizes[e.first.id()] = e.first.size();
+			m_sizes[e.second.id()] = e.second.size();
 		}
 
 	}
 
+	using VisitMap = std::unordered_map<CaveId, std::pair<int32_t, CaveSize > >;
 
-
-	std::vector<CaveId> connections(CaveId c, std::unordered_map<CaveId, bool> const& visited, std::optional<CaveId>& twice_cave)
+	std::vector<CaveId> connections(CaveId c, VisitMap const& visited)
 	{
 		std::vector<CaveId> to_visit{};
 
@@ -100,7 +103,7 @@ public:
 				break;
 
 			case CaveSize::Terminal:
-				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or !it->second)
+				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or it->second.first==0)
 				{
 					to_visit.push_back(connecting_cave.id());				
 				}
@@ -108,19 +111,27 @@ public:
 
 
 			case CaveSize::Little:
-				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or !it->second)
+				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or it->second.first==0)
 				{
 					to_visit.push_back(connecting_cave.id());					
 				}
 				else
 				{
-					//have we visited a small cave twice yet?
+					//have we visited any small cave twice yet?
 					//if not then allow it
-					if (!twice_cave)
+					auto count = std::ranges::count_if(visited,
+						[] (const auto& typeAndCount) 
+						{
+							return (typeAndCount.second.first) > 1 and
+								(typeAndCount.second.second == CaveSize::Little);
+						}
+					);
+
+					if (count == 0)
 					{
-						twice_cave = connecting_cave.id();
 						to_visit.push_back(connecting_cave.id());
 					}
+					
 				}
 				break;
 
@@ -135,15 +146,15 @@ public:
 	{		
 		std::vector<Path> paths{};
 
-		std::unordered_map<CaveId, bool> visited{};
+		VisitMap visited{};
 		
-		std::optional<CaveId> twice_cave{};
+
 		Path current_path{};
 		current_path.push_back(start);
-		visited[start] = true;
+		visited[start] = std::make_pair(1, CaveSize::Terminal);
 		
 		std::vector< std::vector<CaveId> > visit_stack;
-		visit_stack.emplace_back(connections(start, visited, twice_cave));
+		visit_stack.emplace_back(connections(start, visited));
 		
 
 		while ( !current_path.empty() )
@@ -155,7 +166,10 @@ public:
 
 			if (to_visit.empty())
 			{	
-				visited[current_path.back()] = false;
+				auto b = current_path.back();		
+
+				auto it = visited.find(b);
+				it->second.first--;
 				current_path.pop_back();
 				continue;
 			}
@@ -167,7 +181,7 @@ public:
 
 
 			current_path.push_back(next);
-			visited[next] = true;
+			
 
 			//push the to_visit back on the stack
 			visit_stack.emplace_back(std::move(to_visit));
@@ -176,13 +190,24 @@ public:
 			{
 				paths.push_back(current_path);
 
-				visited[next] = false;
+
 				current_path.pop_back();
 			}
 			else
 			{
+
+				auto it = visited.find(next);
+				if (it == visited.end())
+				{
+					visited.emplace(next , std::make_pair(1, m_sizes[next]) );
+				}
+				else
+				{
+					it->second.first++;
+				}
+
 				//push the connections from the top element on the stack
-				visit_stack.emplace_back(connections(next, visited, twice_cave));
+				visit_stack.emplace_back(connections(next, visited));
 
 			}						
 		}
@@ -194,6 +219,7 @@ private:
 
 
 	std::unordered_map<CaveId, std::vector<Cave> > m_connections;
+	std::unordered_map<CaveId, CaveSize> m_sizes;
 	//for each vertex we have a list of edges to other vertices
 
 	//string ids a vertex
@@ -221,7 +247,7 @@ Edge string_to_edge(std::string const& s)
 
 int main(void)
 {
-	auto edges = input::read_vector("../input_files/day12_example.txt", string_to_edge);
+	auto edges = input::read_vector("../input_files/day12.txt", string_to_edge);
 
 	CaveGraph cave_graph{ edges };
 
