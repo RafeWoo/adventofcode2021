@@ -84,27 +84,6 @@ public:
 	}
 
 
-/*
-	Begin 
-		initializes the main stack, 
-		initializes the auxiliary stack, 
-		builds the first stack, 
-		while the main stack is not empty, 
-			then obtains the top of the auxiliary stack, 
-			if the list of adjacent nodes is not empty, 
-				then obtains the first element of the list of adjacent nodes, 
-				presses the element into the main stack, 
-				and the rest into the auxiliary stack, 
-			else 
-				cuts the stack Continue 
-			end if 
-				
-			if main stack top element = = = target node then 
-				get a path and save it.
-			End if 
-		end while
-	end
-*/
 
 	std::vector<CaveId> connections(CaveId c, std::unordered_map<CaveId, bool> const& visited, std::optional<CaveId>& twice_cave)
 	{
@@ -213,71 +192,6 @@ public:
 
 private:
 
-
-	void find_all_paths(CaveId start
-						, CaveId end
-						, std::vector<Path>& paths
-						, std::unordered_map<CaveId, bool>& visited
-						, Path& current_path
-						, std::optional<CaveId> twice_cave
-		)
-	{
-		visited[start] = true;
-
-		current_path.push_back(start);
-
-		if (start == end)
-		{
-			paths.push_back(current_path);
-		}
-		else
-		{
-			for (auto const& connecting_cave : m_connections[start])
-			{
-
-				switch (connecting_cave.size())
-				{
-				case CaveSize::Big:
-					find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
-					break;
-
-				case CaveSize::Terminal:
-					if (!visited[connecting_cave.id()])
-					{
-						find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
-					}
-					break;
-
-
-				case CaveSize::Little:
-					if (!visited[connecting_cave.id()] )
-					{
-						find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
-					}
-					else
-					{
-						//have we visited a small cave twice yet?
-						//if not then allow it
-						if (!twice_cave)
-						{
-							twice_cave = connecting_cave.id();
-							find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
-						}
-					}
-					break;
-
-				}
-				
-			}
-		}
-
-		if (twice_cave && twice_cave == current_path.back())
-		{
-			twice_cave = {};
-		}
-		current_path.pop_back();
-		visited[start] = false;
-	}
 
 	std::unordered_map<CaveId, std::vector<Cave> > m_connections;
 	//for each vertex we have a list of edges to other vertices
