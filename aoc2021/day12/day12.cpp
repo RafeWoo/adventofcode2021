@@ -8,6 +8,9 @@
 #include <cctype>
 #include <assert.h>
 #include <format>
+#include <optional>
+#include <stack>
+
 
 import input_lib;
 
@@ -16,10 +19,16 @@ import input_lib;
 enum class CaveSize
 {
 	Big,
-	Little
+	Little,
+	Terminal	
 };
 
 using CaveId = size_t;  //string hash
+
+CaveId operator "" _cid(const char* s, size_t len)
+{
+	return std::hash<std::string>{}(std::string{ s,len });
+}
 
 class Cave
 {
@@ -28,7 +37,11 @@ public:
 		: m_size{ ::isupper(s[0]) ? CaveSize::Big : CaveSize::Little }
 		, m_id{ std::hash<std::string>{}(s) }
 	{
-	
+		if (m_id == "start"_cid or
+			m_id == "end"_cid)
+		{
+			m_size = CaveSize::Terminal;
+		}
 	}
 
 	Cave()
@@ -71,14 +84,129 @@ public:
 	}
 
 
-	std::vector<Path> find_all_paths_between(CaveId start, CaveId end)
+/*
+	Begin 
+		initializes the main stack, 
+		initializes the auxiliary stack, 
+		builds the first stack, 
+		while the main stack is not empty, 
+			then obtains the top of the auxiliary stack, 
+			if the list of adjacent nodes is not empty, 
+				then obtains the first element of the list of adjacent nodes, 
+				presses the element into the main stack, 
+				and the rest into the auxiliary stack, 
+			else 
+				cuts the stack Continue 
+			end if 
+				
+			if main stack top element = = = target node then 
+				get a path and save it.
+			End if 
+		end while
+	end
+*/
+
+	std::vector<CaveId> connections(CaveId c, std::unordered_map<CaveId, bool> const& visited, std::optional<CaveId>& twice_cave)
 	{
+		std::vector<CaveId> to_visit{};
+
+
+		for (auto const& connecting_cave : m_connections[c])
+		{
+
+			switch (connecting_cave.size())
+			{
+			case CaveSize::Big:
+				to_visit.push_back(connecting_cave.id());				
+				break;
+
+			case CaveSize::Terminal:
+				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or !it->second)
+				{
+					to_visit.push_back(connecting_cave.id());				
+				}
+				break;
+
+
+			case CaveSize::Little:
+				if ( auto it = visited.find(connecting_cave.id()); it == visited.end() or !it->second)
+				{
+					to_visit.push_back(connecting_cave.id());					
+				}
+				else
+				{
+					//have we visited a small cave twice yet?
+					//if not then allow it
+					if (!twice_cave)
+					{
+						twice_cave = connecting_cave.id();
+						to_visit.push_back(connecting_cave.id());
+					}
+				}
+				break;
+
+			}
+
+		}
+
+		return to_visit;
+	}
+
+	std::vector<Path> find_all_paths_between(CaveId start, CaveId end)
+	{		
 		std::vector<Path> paths{};
 
 		std::unordered_map<CaveId, bool> visited{};
 		
-		Path path{};
-		find_all_paths(start, end, paths, visited, path);
+		std::optional<CaveId> twice_cave{};
+		Path current_path{};
+		current_path.push_back(start);
+		visited[start] = true;
+		
+		std::vector< std::vector<CaveId> > visit_stack;
+		visit_stack.emplace_back(connections(start, visited, twice_cave));
+		
+
+		while ( !current_path.empty() )
+		{
+
+			auto to_visit = std::move(visit_stack.back());
+			visit_stack.pop_back();
+
+
+			if (to_visit.empty())
+			{	
+				visited[current_path.back()] = false;
+				current_path.pop_back();
+				continue;
+			}
+
+
+			//add the top element from the to_visit stack to the path
+			auto next = to_visit.back();
+			to_visit.pop_back();
+
+
+			current_path.push_back(next);
+			visited[next] = true;
+
+			//push the to_visit back on the stack
+			visit_stack.emplace_back(std::move(to_visit));
+								
+			if (next == end)
+			{
+				paths.push_back(current_path);
+
+				visited[next] = false;
+				current_path.pop_back();
+			}
+			else
+			{
+				//push the connections from the top element on the stack
+				visit_stack.emplace_back(connections(next, visited, twice_cave));
+
+			}						
+		}
 
 		return paths;
 	}
@@ -86,7 +214,13 @@ public:
 private:
 
 
-	void find_all_paths(CaveId start, CaveId end, std::vector<Path>& paths, std::unordered_map<CaveId, bool>& visited, Path& current_path)
+	void find_all_paths(CaveId start
+						, CaveId end
+						, std::vector<Path>& paths
+						, std::unordered_map<CaveId, bool>& visited
+						, Path& current_path
+						, std::optional<CaveId> twice_cave
+		)
 	{
 		visited[start] = true;
 
@@ -100,13 +234,47 @@ private:
 		{
 			for (auto const& connecting_cave : m_connections[start])
 			{
-				if (!visited[connecting_cave.id()] or connecting_cave.size() == CaveSize::Big)
+
+				switch (connecting_cave.size())
 				{
-					find_all_paths(connecting_cave.id(), end, paths, visited, current_path);
+				case CaveSize::Big:
+					find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
+					break;
+
+				case CaveSize::Terminal:
+					if (!visited[connecting_cave.id()])
+					{
+						find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
+					}
+					break;
+
+
+				case CaveSize::Little:
+					if (!visited[connecting_cave.id()] )
+					{
+						find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
+					}
+					else
+					{
+						//have we visited a small cave twice yet?
+						//if not then allow it
+						if (!twice_cave)
+						{
+							twice_cave = connecting_cave.id();
+							find_all_paths(connecting_cave.id(), end, paths, visited, current_path, twice_cave);
+						}
+					}
+					break;
+
 				}
+				
 			}
 		}
 
+		if (twice_cave && twice_cave == current_path.back())
+		{
+			twice_cave = {};
+		}
 		current_path.pop_back();
 		visited[start] = false;
 	}
@@ -135,14 +303,11 @@ Edge string_to_edge(std::string const& s)
 }
 
 
-CaveId operator "" _cid(const char* s, size_t len)
-{
-	return std::hash<std::string>{}(std::string{ s,len });
-}
+
 
 int main(void)
 {
-	auto edges = input::read_vector("../input_files/day12.txt", string_to_edge);
+	auto edges = input::read_vector("../input_files/day12_example.txt", string_to_edge);
 
 	CaveGraph cave_graph{ edges };
 
