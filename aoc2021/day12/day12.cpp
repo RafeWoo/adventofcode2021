@@ -146,8 +146,7 @@ public:
 	{		
 		std::vector<Path> paths{};
 
-		VisitMap visited{};
-		
+		VisitMap visited{};		
 
 		Path current_path{};
 		current_path.push_back(start);
