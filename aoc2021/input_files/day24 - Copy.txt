@@ -1,0 +1,279 @@
+inp w                 //w = i1 x =0, y = 0, z =0;
+mul x 0                        x=0
+add x z                        x=0
+mod x 26                       x=0
+div z 1                                     z=0  
+add x 11                       x=11
+eql x w                        x=0
+eql x 0                        x=1
+mul y 0                               y = 0
+add y 25                              y =25 
+mul y x                               y=25
+add y 1                               y=26
+mul z y                                      z=0    
+mul y 0                               y=0
+add y w                               y=i1
+add y 6                               y=i1+6 
+mul y x                               y=i1+6
+add z y                                       z1=i1+6  
+
+					
+inp w                  //w = i2  x=1 y=i1+6 z=i1+6
+mul x 0							x=0					
+add x z                         x=i1+6
+mod x 26                        x=i1+6
+div z 1                                     z=i1+6
+add x 11                         x=i1+17
+eql x w                          x=0
+eql x 0                          x=1
+mul y 0                             y = 0
+add y 25                            y=25
+mul y x                             y=25
+add y 1                             y=26
+mul z y                                         z = (i1+6)*26
+mul y 0                             y=0
+add y w                             y=i2
+add y 14                            y=i2+14
+mul y x
+add z y                                          z2=(i1+6) *26 + (i2+14)
+
+
+
+inp w                 w = i3
+mul x 0                      x = 0
+add x z                      x = (i1 + 6) * 26 + (i2 + 14)
+mod x 26                     x = (i2+14)
+add x 15                     x = (i2+29)
+eql x w                      x = 0
+eql x 0                      x = 1
+mul y 0                              y = 0    
+add y 25                             y = 25  
+add y 1                              y = 26
+mul z y                                     z =  (i1 + 6) * 26^2 + (i2 + 14) * 26
+mul y 0                              y = 0
+add y w                              y = i3
+add y 13                             y = i3 + 13
+add z y                                     z3 = (i1+6)*26^2 + (i2+ 14) * 26 + (i3+13);
+
+inp w              w = i4
+mul x 0                  x = 0
+add x z				     x = z3
+mod x 26                 x = (i3 + 13)
+div z 26                                     z = (i1+6)*26 + (i2+ 14)
+add x -14                 x = (i3-1)
+eql x w                   x =  1 | 0
+eql x 0                   x =  0 | 1  (i4 != i3-1)  
+mul y 0                              y = 0
+add y 25                             y = 25 
+mul y x                               y = 0 | 25
+add y 1                               y = 1 | 26 (i4 != (i3-1)) 
+mul z y                                                           z =  (i1+6)*26 + (i2+ 14) | (i1+6)*26 ^2 + (i2+ 14) * 26 
+mul y 0                               y = 0
+add y w                               y = i4
+add y 1                               y = (i4 +1)
+mul y x                               y = 0 | (i4 + 1) 
+add z y                                                            z4 = (i1+6)*26 + (i2+ 14) | (i1+6)*26 ^2 + (i2+ 14) * 26  + (i4 + 1)
+                                                                            i4 == i3-1
+																			
+
+
+inp w              w = i5
+mul x 0						x =0
+add x z                     x = (i1+6)*26 + (i2+ 14)
+mod x 26                    x = i2 + 14
+div z 1                                                      z = (i1+6)*26 + (i2+ 14)
+add x 10                    x = i2 + 24
+eql x w                     x = 0
+eql x 0                     x = 1
+mul y 0                                y = 0
+add y 25                               y =25
+mul y x                                y = 25
+add y 1                                y = 26
+mul z y                                                    z = (i1+6)*26^2 + (i2+ 14) * 26
+mul y 0                                y = 0
+add y w                                y = i5
+add y 6                                y = i5 + 6
+mul y x                                y = i5 + 6
+add z y                                                    z = (i1+6)*26^2 + (i2+ 14) * 26 + (i5 + 6)
+
+
+inp w            w = i6
+mul x 0						x = 0
+add x z            x = (i1+6)*26^2 + (i2+ 14) * 26 + (i5 + 6)
+mod x 26           x = (i5 + 6)
+div z 26															z = (i1+6)*26 + (i2+ 14)
+add x 0				 x = (i5 + 6)
+eql x w				 x =  1 | 0	
+eql x 0              x =  0 | 1
+mul y 0								y = 0
+add y 25							y = 25
+mul y x                             y = 0 | 25
+add y 1                             y = 1 | 26
+mul z y																z = (i1+6)*26 + (i2+ 14)  |  (i1+6)*26^2 + (i2+ 14) * 26
+mul y 0                             y = 0
+add y w                             y = i6
+add y 13                            y = i6 + 13
+mul y x                             y = 0 | (i6 + 13)
+add z y                                                             z = (i1+6)*26 + (i2+ 14)  |  (i1+6)*26^2 + (i2+ 14) * 26 + (i6+13)
+																			i6 = i5 + 6			
+
+inp w                w = i7
+mul x 0                 x = 0
+add x z                 x = (i1+6)*26 + (i2+ 14) 
+mod x 26                x= (i2+ 14)
+div z 26						    z=(i1+6)
+add x -6                x=(i2+ 8)
+eql x w                  x = 1 | 0    (i7 == i2 + 8)
+eql x 0                  x = 0 | 1    (i7 != i2 + 8)
+mul y 0                             y =0
+add y 25                            y =25
+mul y x                             y = 0 | 25
+add y 1                             y = 1 | 26
+mul z y                                          z= (i1+6) | (i1+6)*26
+mul y 0                             y = 0
+add y w                             y = i7
+add y 6                             y = i7 + 6
+mul y x                             y = 0 | i7 + 6
+add z y                                              z = (i1+6) | (i1+6)*26 + (i7+6)
+                                                           i7 == i2 + 8
+inp w           w = i8
+mul x 0                x=0
+add x z                x=(i1+6)
+mod x 26               x=(i1+6)
+div z 1													z=(i1+6)
+add x 13               x=(i1+19)
+eql x w                x=0
+eql x 0                x=1
+mul y 0                         y=0
+add y 25                        y=25  
+mul y x                         y=25
+add y 1                         y=26
+mul z y                                             z=(i1+6) * 26
+mul y 0                         y=0
+add y w                         y=i8 
+add y 3                         y=i8 +3
+mul y x                 
+add z y                                             z= (i1+6) * 26 + (i8+3)
+
+inp w         w = i9
+mul x 0				x=0
+add x z				x = (i1+6) * 26 + (i8+3)
+mod x 26			x = (i8+3)
+div z 26											z = (i1+6)
+add x -3			x = i8
+eql x w				x = 1 | 0
+eql x 0             x = 0 | 1 
+mul y 0                         y = 0
+add y 25                        y = 25
+mul y x                         y = 0 | 25
+add y 1                         y = 1 | 26
+mul z y                                               z = (i1+6) | (i1+6) * 26
+mul y 0                         y  =0
+add y w                         y = i9 
+add y 8                         y = i9 + 8
+mul y x							y = 0 | i9 + 8
+add z y                                               z = (i1+6) | (i1+6) * 26 + (i9 + 8)
+
+inp w		w = i10
+mul x 0				x =0
+add x z				x = i1+6
+mod x 26            x = i1+6
+div z 1												z = (i1+6)
+add x 13            x = i1 + 19
+eql x w				x  =0
+eql x 0             x = 1
+mul y 0							y = 0
+add y 25						y = 25
+mul y x							y = 25
+add y 1                         y = 26
+mul z y												z = (i1+6) * 26
+mul y 0                         y = 0
+add y w                         y = i10
+add y 14                        y = i10 + 14
+mul y x
+add z y												z = (i1+6) * 26 + (i10 +14)
+
+inp w		w = i11
+mul x 0				x =0
+add x z				
+mod x 26			x = i10 + 14
+div z 1												z = (i1+6) * 26 + (i10 +14)
+add x 15			x = i10 + 29
+eql x w				x = 0
+eql x 0             x = 1
+mul y 0						y = 0
+add y 25					y = 25
+mul y x  
+add y 1						y = 26
+mul z y												z = (i1+6) * 26^2 + (i10 +14) * 26			
+mul y 0						y = 0
+add y w						y = i11
+add y 4						y = i11  +4
+mul y x
+add z y												z = (i1+6) * 26^2 + (i10 +14) * 26	+ (i11+4)
+
+inp w		w = i12
+mul x 0				x =0
+add x z				x = (i1+6) * 26 + (i11 + 4)
+mod x 26            x = (i11 + 4)
+div z 26											z = (i1+6) * 26 + (i10 +14)
+add x -2			x = i11 + 2
+eql x w				x = 1 | 0  
+eql x 0				x = 0 | 1
+mul y 0							y = 0
+add y 25						y = 25
+mul y x							y = 0 | 25
+add y 1							y = 1 | 26
+mul z y												z = (i1+6) * 26 + (i10 +14) | (i1+6) * 26^2 + (i10 +14) * 26
+mul y 0							y = 0
+add y w							y = i12
+add y 7							y = i12+7
+mul y x							y = 0 | i12 + 7
+add z y												z = (i1+6) * 26 + (i10 +14) | (i1+6) * 26^2 + (i10 +14) * 26 + (i12 + 7)
+
+inp w      w = i13
+mul x 0         x = 0
+add x z         x = (i1+6) * 26 + (i10 +14)
+mod x 26        x = (i10 +14)
+div z 26                       					z = (i1+6)
+add x -9         x = i10+5
+eql x w          x = 1|0     if ( i13 ==i10+5)   (i10==i13-5)                 
+eql x 0          x = 0|1                         
+mul y 0                       y = 0
+add y 25                      y = 25
+mul y x                       y = 0
+add y 1                       y = 1
+mul z y                               z = (i1+6)
+mul y 0                       y = 0
+add y w                       y = i13
+add y 15                      y = i13 + 15
+mul y x                       y = 0 
+add z y                                     	z =(i1+6)       
+
+
+inp w         w = i14
+mul x 0            x = 0
+add x z			   x = (i1+6)
+mod x 26           x = (i1+6)
+div z 26                              z = 0
+add x -2           x = i1+4
+eql x w            x =  1    if i14 == i1+4 or (i1 = i14-4)
+eql x 0            x =  0
+mul y 0                    y = 0
+add y 25                   y = 25  
+mul y x                    y = 0
+add y 1                    y = 1   
+mul z y 			                  z = 0
+mul y 0                    y = 0
+add y w                    y = i14
+add y 1                    y = i14+ 1
+mul y x                     y = 0
+add z y                                   z = 0
+
+(i1 == i14-4)
+(i10== i13-5) 
+(i12== i11 + 2)
+(i8 ==i9)
+(i7 == i2+8)
+(i5=i6-6)
+(i4=i3-1)
